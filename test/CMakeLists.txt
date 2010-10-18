@@ -7,6 +7,7 @@ execute_process(COMMAND gunzip -c ${BUNNY_TGZ}
   OUTPUT_FILE ${CMAKE_CURRENT_BINARY_DIR}/bunny.ply)
 
 add_test_module(ply_test
+  bin_float.cpp
   header.cpp
   model.cpp
   )
@@ -15,3 +16,6 @@ add_custom_target(check
   ${ply_test_EXECUTABLE} --result_code=no --log_level=all
   DEPENDS ${ply_test_EXECUTABLE}
   )
+
+add_executable(mmap_alloc mmap.cpp)
+target_link_libraries(mmap_alloc ${Boost_LIBRARIES})

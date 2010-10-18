@@ -5,7 +5,7 @@ project(ply)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/CToolBox)
 
-find_package(Boost REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system)
 
 include_directories(include
   ${Boost_INCLUDE_DIRS}
