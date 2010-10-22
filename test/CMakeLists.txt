@@ -2,14 +2,16 @@
 include(AddTestModule)
 
 set(BUNNY_TGZ ${CMAKE_SOURCE_DIR}/data/bunny.ply.gz)
-file(COPY ${BUNNY_TGZ} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${BUNNY_TGZ} ${CMAKE_SOURCE_DIR}/data/faces.txt
+  DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 execute_process(COMMAND gunzip -c ${BUNNY_TGZ}
   OUTPUT_FILE ${CMAKE_CURRENT_BINARY_DIR}/bunny.ply)
 
 add_test_module(ply_test
-  bin_float.cpp
   header.cpp
-  model.cpp
+  property.cpp
+  element.cpp
+  element_parser.cpp
   )
 
 add_custom_target(check
