@@ -11,11 +11,9 @@
 #include <ply/element_grammar.hpp>
 
 BOOST_FUSION_DEFINE_STRUCT(, vertex,
-		(float, x)
-		(float, y)
-		(float, z)
-		(float, confidence)
-		(float, intensity)
+		(int, x)
+		(int, y)
+		(int, z)
 )
 
 BOOST_FUSION_DEFINE_STRUCT(, face,
@@ -30,20 +28,31 @@ BOOST_AUTO_TEST_CASE(element)
 
 	typedef std::string::iterator iterator;
 
-	qi::rule<iterator, std::vector<float>(), qi::locals<std::size_t>, ascii::space_type> g;
-	g %= qi::omit[qi::int_[_a = _1]] > qi::repeat(_a)[qi::float_];
+	ply::element e;
+	e.name = "vertex";
+	e.properties.push_back(ply::property(ply::float32, "x"));
+	e.properties.push_back(ply::property(ply::float32, "y"));
+	e.properties.push_back(ply::property(ply::float32, "z"));
+	e.properties.push_back(ply::property(ply::float32, "confidence"));
+	e.properties.push_back(ply::property(ply::float32, "intensity"));
 
-	std::string intensity = "3 4.5 5.5 6.5 8.15";
-	iterator start = intensity.begin();
-	iterator end = intensity.end();
+	ply::element_grammar<iterator, ascii::space_type, vertex> g(e);
 
-	//boost::array<float, 3> v;
-	std::vector<float> v;
+	std::string string = "3 4.5 5.5 6.5 8.15 3 4.5 5.5 6.5 8.15";
+	iterator f = string.begin();
+	iterator l = string.end();
 
-	boost::spirit::qi::phrase_parse(start, end, g, ascii::space, v);
+	vertex v;
 
-	std::cout << "size: " << v.size() << std::endl;
-	std::cout << v[0] << std::endl;
-	std::cout << v[1] << std::endl;
-	std::cout << v[2] << std::endl;
+	boost::spirit::qi::phrase_parse(f, l, g, ascii::space, v);
+
+	std::cout << v.x << std::endl;
+	std::cout << v.y << std::endl;
+	std::cout << v.z << std::endl;
+
+	boost::spirit::qi::phrase_parse(f, l, g, ascii::space, v);
+
+	std::cout << v.x << std::endl;
+	std::cout << v.y << std::endl;
+	std::cout << v.z << std::endl;
 }

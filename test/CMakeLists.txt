@@ -9,7 +9,6 @@ execute_process(COMMAND gunzip -c ${BUNNY_TGZ}
 
 add_test_module(ply_test
   header.cpp
-  property.cpp
   element.cpp
   element_parser.cpp
   )
