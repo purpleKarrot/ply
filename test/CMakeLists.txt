@@ -11,6 +11,7 @@ add_test_module(ply_test
   header.cpp
   element.cpp
   element_parser.cpp
+  complete.cpp
   )
 
 add_custom_target(check

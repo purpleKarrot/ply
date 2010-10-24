@@ -82,9 +82,8 @@ class element_grammar: public boost::spirit::qi::grammar<Iterator, Element(), Sk
 
 	struct assign_grammar
 	{
-		assign_grammar(property_parsers_t& parsers,
-				std::vector<ply::property> const& properties) :
-			parsers(parsers), properties(properties)
+		assign_grammar(property_grammar& parser, ply::property const& property) :
+			parser(parser), property(property)
 		{
 		}
 
@@ -98,16 +97,18 @@ class element_grammar: public boost::spirit::qi::grammar<Iterator, Element(), Sk
 		void operator()(I)
 		{
 			using namespace boost::fusion::extension;
-			if (properties[I::value].name == name<I::value> ())
+			if (property.name == name<I::value> ())
 			{
 				using namespace qi::labels;
-				parsers[I::value] = ascii_scalar<property_grammar> (
-						properties[I::value].type, ph::at_c<I::value>(_r1) = _1);
+				parser = ascii_scalar<property_grammar> (
+						property.type, ph::at_c<I::value>(_r1) = _1);
+
+				std::cout << I::value << ": " << property.name << " == " << name<I::value> () << std::endl;
 			}
 		}
 
-		property_parsers_t& parsers;
-		std::vector<ply::property> const& properties;
+		property_grammar& parser;
+		ply::property const& property;
 	};
 
 public:
@@ -115,19 +116,21 @@ public:
 		element_grammar::base_type(start, element.name), property_parsers(
 				new property_grammar[element.properties.size()])
 	{
+		typedef boost::mpl::range_c<int, 0, size> indices;
+
 		start = qi::eps;
 		for (int i = 0; i < element.properties.size(); ++i)
 		{
 			using namespace qi::labels;
 			property_parsers[i] = ascii_omit<property_grammar> (
 					element.properties[i].type);
+
+			boost::mpl::for_each<indices>(assign_grammar(property_parsers[i],
+					element.properties[i]));
+
 			start = start.copy() > property_parsers[i](_val);
 		}
 		//start = start.copy > qi::eol;
-
-		typedef boost::mpl::range_c<int, 0, size> indices;
-		boost::mpl::for_each<indices>(assign_grammar(property_parsers,
-				element.properties));
 	}
 
 private:
