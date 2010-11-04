@@ -10,6 +10,9 @@
 #include <boost/spirit/include/classic_position_iterator.hpp>
 #include <boost/fusion/adapted/struct/define_struct.hpp>
 
+#include <iterator.hpp>
+#include <element_parser.hpp>
+
 namespace qi = boost::spirit::qi;
 namespace ascii = boost::spirit::ascii;
 namespace classic = boost::spirit::classic;
@@ -39,7 +42,6 @@ BOOST_AUTO_TEST_CASE(complete)
 	iterator position_begin(fwd_begin, fwd_end, "bunny.ply");
 	iterator position_end;
 
-	// prepare output
 	ply::header header;
 	BOOST_AUTO(comment, qi::lit("comment") >> *(ascii::char_ - qi::eol) >> qi::eol);
 	BOOST_AUTO(skip, ascii::blank | comment);
@@ -51,16 +53,26 @@ BOOST_AUTO_TEST_CASE(complete)
 		qi::phrase_parse(position_begin, position_end, header_g, skip, header);
 
 		std::vector<vertex_> vertices;
-		vertices.reserve(header.elements[0].count);
+		//vertices.reserve(header.elements[0].count);
 
 		typedef ply::element_grammar<iterator, BOOST_TYPEOF(skip), vertex_> element_g;
 		element_g elem_g(header.elements[0]);
 
-		vertex_ v;
-		qi::phrase_parse(position_begin, position_end, elem_g, skip, v);
+		typedef element_phrase_parser<vertex_, iterator, BOOST_TYPEOF(skip)>
+				parser_type;
+		boost::shared_ptr<parser_type> parser(new parser_type(position_begin,
+				position_end, elem_g, skip, header.elements[0].count));
 
-		BOOST_MESSAGE(v.intensity);
-		BOOST_MESSAGE(v.confidence);
+		typedef ::iterator<vertex_, parser_type> parse_iterator;
+ 		std::copy(parse_iterator(parser), parse_iterator(),
+				std::back_inserter(vertices));
+
+ 		BOOST_CHECK_EQUAL(vertices.size(), header.elements[0].count);
+
+ 		for (int i = 0; i < 10; ++i)
+		{
+ 			BOOST_MESSAGE(i << ": " << vertices[i].intensity);
+		}
 	}
 	catch (const qi::expectation_failure<iterator>& e)
 	{
