@@ -36,21 +36,21 @@ BOOST_AUTO_TEST_CASE(element)
 	e.properties.push_back(ply::property(ply::float32, "confidence"));
 	e.properties.push_back(ply::property(ply::float32, "intensity"));
 
-	ply::element_grammar<iterator, ascii::space_type, vertex> g(e);
+	ply::element_grammar<iterator, ascii::blank_type, vertex> g(e);
 
-	std::string string = "3 4.5 5.5 6.5 8.15 3 4.5 5.5 6.5 8.15";
+	std::string string = "3 4.5 5.5 6.5 8.15\n3 4.5 5.5 6.5 8.15\n";
 	iterator f = string.begin();
 	iterator l = string.end();
 
 	vertex v;
 
-	boost::spirit::qi::phrase_parse(f, l, g, ascii::space, v);
+	boost::spirit::qi::phrase_parse(f, l, g, ascii::blank, v);
 
 	std::cout << v.x << std::endl;
 	std::cout << v.y << std::endl;
 	std::cout << v.z << std::endl;
 
-	boost::spirit::qi::phrase_parse(f, l, g, ascii::space, v);
+	boost::spirit::qi::phrase_parse(f, l, g, ascii::blank, v);
 
 	std::cout << v.x << std::endl;
 	std::cout << v.y << std::endl;

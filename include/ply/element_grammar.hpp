@@ -130,7 +130,9 @@ public:
 
 			start = start.copy() > property_parsers[i](_val);
 		}
-		//start = start.copy > qi::eol;
+
+		// TODO: if format ascii
+		start = start.copy() > qi::eol;
 	}
 
 private:

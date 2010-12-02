@@ -10,14 +10,59 @@
 #include <boost/spirit/include/classic_position_iterator.hpp>
 #include <boost/fusion/adapted/struct/define_struct.hpp>
 
+#include <iterator.hpp>
+#include <element_parser.hpp>
+
 namespace qi = boost::spirit::qi;
 namespace ascii = boost::spirit::ascii;
 namespace classic = boost::spirit::classic;
 
-BOOST_FUSION_DEFINE_STRUCT(, vertex_,
+struct vertex_
+{
+	//float x, y, z;
+	float intensity;
+	float confidence;
+};
+
+BOOST_FUSION_ADAPT_STRUCT(vertex_,
 		(float, intensity)
 		(float, confidence)
 )
+
+template<typename Iterator>
+void parse_ply_header(Iterator& begin, Iterator end, ply::header& header)
+{
+	static BOOST_AUTO(comment, qi::lit("comment") >> *(ascii::char_ - qi::eol) >> qi::eol);
+	static BOOST_AUTO(skip, ascii::blank | comment);
+
+	static ply::header_grammar<Iterator, BOOST_TYPEOF(skip)> grammar;
+
+	qi::phrase_parse(begin, end, grammar, skip, header);
+}
+
+template<typename OutputIterator>
+struct value_type
+{
+};
+
+template<typename Container>
+struct value_type<std::back_insert_iterator<Container> >
+{
+	typedef typename Container::value_type type;
+};
+
+template<typename Iterator, typename OutputIterator>
+void parse_ply_element(Iterator& begin, Iterator end, const ply::element& element, OutputIterator output)
+{
+	typedef typename value_type<OutputIterator>::type value_t;
+	ply::element_grammar<Iterator, ascii::blank_type, value_t> grammar(element);
+
+	typedef element_phrase_parser<value_t, Iterator, ascii::blank_type> parser_t;
+	boost::shared_ptr<parser_t> parser(new parser_t(begin, end, grammar, ascii::blank, element.count));
+
+	typedef ::iterator<value_t, parser_t> parse_iterator;
+	std::copy(parse_iterator(parser), parse_iterator(), output);
+}
 
 BOOST_AUTO_TEST_CASE(complete)
 {
@@ -39,28 +84,22 @@ BOOST_AUTO_TEST_CASE(complete)
 	iterator position_begin(fwd_begin, fwd_end, "bunny.ply");
 	iterator position_end;
 
-	// prepare output
-	ply::header header;
-	BOOST_AUTO(comment, qi::lit("comment") >> *(ascii::char_ - qi::eol) >> qi::eol);
-	BOOST_AUTO(skip, ascii::blank | comment);
-
 	// parse
 	try
 	{
-		ply::header_grammar<iterator, BOOST_TYPEOF(skip)> header_g;
-		qi::phrase_parse(position_begin, position_end, header_g, skip, header);
+		ply::header header;
+		parse_ply_header(position_begin, position_end, header);
 
 		std::vector<vertex_> vertices;
-		vertices.reserve(header.elements[0].count);
+		parse_ply_element(position_begin, position_end, header.elements[0],
+				std::back_inserter(vertices));
 
-		typedef ply::element_grammar<iterator, BOOST_TYPEOF(skip), vertex_> element_g;
-		element_g elem_g(header.elements[0]);
+ 		BOOST_CHECK_EQUAL(vertices.size(), header.elements[0].count);
 
-		vertex_ v;
-		qi::phrase_parse(position_begin, position_end, elem_g, skip, v);
-
-		BOOST_MESSAGE(v.intensity);
-		BOOST_MESSAGE(v.confidence);
+ 		for (int i = 0; i < 10; ++i)
+		{
+ 			BOOST_MESSAGE(i << ": " << vertices[i].intensity);
+		}
 	}
 	catch (const qi::expectation_failure<iterator>& e)
 	{
