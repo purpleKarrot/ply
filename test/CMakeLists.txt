@@ -21,3 +21,5 @@ add_custom_target(check
 
 add_executable(mmap_alloc mmap.cpp)
 target_link_libraries(mmap_alloc ${Boost_LIBRARIES})
+
+add_executable(out_iterator out_iterator.cpp)
